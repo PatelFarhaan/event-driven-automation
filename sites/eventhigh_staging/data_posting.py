@@ -1,0 +1,35 @@
+import json
+import threading
+from sites.eventhigh_staging.login_crawl import login
+from sites.eventhigh_staging.data_formation import formed_data
+
+
+def multi_thread_posting(payload, sess):
+
+        headers = {
+            'Origin': 'https://organizer.eventshigh.com',
+            'Content-Type': 'application/json;charset=UTF-8',
+            'DNT': '1',
+            'Accept': 'application/json, text/plain, */*',
+            'Authorization': 'Bearer ***REMOVED_JWT_TOKEN***'
+        }
+
+        url = 'https://ticketing.eventshigh.com/_ah/api/events/v4/update'
+
+        response = sess.put(url=url, data=json.dumps(payload), headers=headers)
+        print(response.status_code, response.headers)
+
+
+def post_data():
+    threads = []
+    resp, sess = login()
+    payloads = formed_data()
+
+    if resp.status_code == 200:
+        for i in payloads:
+            t = threading.Thread(target=multi_thread_posting, args=(i, sess))
+            threads.append(t)
+            t.start()
+
+        for j in threads:
+            j.join()

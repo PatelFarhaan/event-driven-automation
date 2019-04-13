@@ -1,0 +1,6 @@
+venv
+__pycacahe__
+__pycache__/
+test.py
+test2.py
+sample.txt
