@@ -9,13 +9,17 @@ image_file = 'sites/eventhigh/temp_images/temp_image.png'
 
 
 def download_media_file():
-    urllib.request.urlretrieve(
-        'https://ercess.com'+resp_data[0]['event info'][0]['profile image'], image_file)
-    return True
+    if resp_data:
+        urllib.request.urlretrieve(
+            'https://ercess.com'+resp_data[0]['event info'][0]['profile image'], image_file)
+        return True
+    else:
+        return False
 
 
 def implicit():
     resp = download_media_file()
+
     if resp:
         # bucket_name = 'farhaan_eventhigh'
         # object_name = 'obj_name'
@@ -26,3 +30,6 @@ def implicit():
         # blob.make_public()
         # return blob.public_url
         return "gcloud acc"
+
+    else:
+        return False

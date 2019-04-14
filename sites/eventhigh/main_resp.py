@@ -14,16 +14,20 @@ def main_dict():
         temp = tuple(temp.split(','))
         event_details_all.append(temp)
 
-    response = [None] * len(event_details_all)
+    if event_details_all == []:
+        return False
 
-    for index, j in enumerate(event_details_all):
-        event_id = int(j[0])
-        site_id = int(j[1])
-        t = threading.Thread(target=main_process,args=(event_id, site_id, response, index))
-        threads.append(t)
-        t.start()
+    else:
+        response = [None] * len(event_details_all)
 
-    for k in threads:
-        k.join()
+        for index, j in enumerate(event_details_all):
+            event_id = int(j[0])
+            site_id = int(j[1])
+            t = threading.Thread(target=main_process,args=(event_id, site_id, response, index))
+            threads.append(t)
+            t.start()
 
-    return response
+        for k in threads:
+            k.join()
+
+        return response

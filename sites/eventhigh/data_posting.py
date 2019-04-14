@@ -25,11 +25,14 @@ def eventhigh_post_data():
     resp, sess = login()
     payloads = formed_data()
 
-    if resp.status_code == 200:
-        for i in payloads:
-            t = threading.Thread(target=multi_thread_posting, args=(i, sess))
-            threads.append(t)
-            t.start()
+    if payloads:
+        if resp.status_code == 200:
+            for i in payloads:
+                t = threading.Thread(target=multi_thread_posting, args=(i, sess))
+                threads.append(t)
+                t.start()
 
-        for j in threads:
-            j.join()
+            for j in threads:
+                j.join()
+    else:
+        print("No Events for EventHigh!!!")
