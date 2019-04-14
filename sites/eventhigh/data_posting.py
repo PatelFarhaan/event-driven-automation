@@ -1,7 +1,7 @@
 import json
 import threading
-from sites.eventhigh_staging.login_crawl import login
-from sites.eventhigh_staging.data_formation import formed_data
+from sites.eventhigh.login_crawl import login
+from sites.eventhigh.data_formation import formed_data
 
 
 def multi_thread_posting(payload, sess):
@@ -17,10 +17,10 @@ def multi_thread_posting(payload, sess):
         url = 'https://ticketing.eventshigh.com/_ah/api/events/v4/update'
 
         response = sess.put(url=url, data=json.dumps(payload), headers=headers)
-        print(response.status_code, response.headers)
+        print("EventHigh Processing Done!!!")
 
 
-def post_data():
+def eventhigh_post_data():
     threads = []
     resp, sess = login()
     payloads = formed_data()

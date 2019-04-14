@@ -1,0 +1,2 @@
+resp = [{'ticket id': 451, 'ticket name': 'Registration', 'original ticket price': '100', 'ticket price': '100.0', 'other charges': 0, 'other charges type': 'percent', 'ticket quantity': 100, 'minimum quantity': 1, 'maximum quantity': 10, 'quantity left': 100, 'ticket message': '( INCLUDING TEA AND LUNCH ) [ Pay 100 online 800 @ Venue = Rs. 900 ] ', 'ticket start date': '2019-02-05', 'ticket start time': '18:15:00', 'expiry date': '2019-02-08', 'expiry time': '12:00:00', 'ticket label': 0, 'active': 'inactive'}, {'capacity': 100}]
+print(resp)

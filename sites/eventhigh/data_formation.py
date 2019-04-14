@@ -1,7 +1,7 @@
 import json
 from datetime import datetime
-from sites.eventhigh_staging.main_resp import main_dict
-from sites.eventhigh_staging.google_image import implicit
+from sites.eventhigh.main_resp import main_dict
+from sites.eventhigh.google_image import implicit
 
 
 ticket_ids = []

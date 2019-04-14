@@ -1,11 +1,11 @@
 import urllib
 from gcloud import storage
 from urllib.request import urlopen
-from sites.eventhigh_staging.main_resp import main_dict
+from sites.eventhigh.main_resp import main_dict
 
 
 resp_data = main_dict()
-image_file = 'sites/eventhigh_staging/temp_images/temp_image.png'
+image_file = 'sites/eventhigh/temp_images/temp_image.png'
 
 
 def download_media_file():

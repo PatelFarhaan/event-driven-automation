@@ -6,7 +6,7 @@ def main_dict():
     threads = []
     event_details_all = []
 
-    with open('sites/eventhigh_staging/event_details.txt', 'r') as f:
+    with open('sites/eventhigh/event_details.txt', 'r') as f:
         event_details = f.readlines()
 
     for i in event_details:
