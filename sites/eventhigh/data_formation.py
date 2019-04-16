@@ -10,27 +10,17 @@ resp_data = main_dict()
 
 
 def datetime_to_iso(string_date):
-    string_date = string_date[:10]+' '+string_date[10:]
-    resp = datetime.strptime(string_date, '%Y-%m-%d %H:%M:%S')
+    resp = datetime.strptime(string_date, '%Y-%m-%d%H:%M:%S')
     resp = datetime.timestamp(resp)
     return resp
 
 def tickets_str_to_date(string_date):
-    string_date = string_date[:10]+' '+string_date[10:]
-    resp = datetime.strptime(string_date, '%Y-%m-%d %H:%M:%S')
+    resp = datetime.strptime(string_date, '%Y-%m-%d%H:%M:%S')
     return resp.date()
 
-
 def tickets_str_to_time(string_date):
-    string_date = string_date[:10]+' '+string_date[10:]
-    resp = datetime.strptime(string_date, '%Y-%m-%d %H:%M:%S')
+    resp = datetime.strptime(string_date, '%Y-%m-%d%H:%M:%S')
     return resp.time()
-
-def tickets_str_to_timestamp(string_date):
-    string_date = string_date[:10]+' '+string_date[10:]
-    resp = datetime.strptime(string_date, '%Y-%m-%d %H:%M:%S')
-    resp = datetime.timestamp(resp)
-    return resp
 
 
 def ticket_details():
@@ -100,8 +90,8 @@ def ticket_adapter():
                     'validityEndDate': str(tickets_str_to_date(i[ticket_event_name][j]['ticket_class']['sales_end'])),
                     'validityEndOptionAmPm': 'am' if tickets_str_to_time(i[ticket_event_name][j]['ticket_class']['sales_end']).hour > 12 else 'pm',
                     'rank': 1,
-                    'validityStart': float(tickets_str_to_timestamp(i[ticket_event_name][j]['ticket_class']['sales_start'])),
-                    'validityEnd': float(tickets_str_to_timestamp(i[ticket_event_name][j]['ticket_class']['sales_end']))
+                    'validityStart': datetime_to_iso(i[ticket_event_name][j]['ticket_class']['sales_start']),
+                    'validityEnd': datetime_to_iso(i[ticket_event_name][j]['ticket_class']['sales_end'])
 
                 }
                 temp_list.append(ticket_adapter_class)
@@ -146,8 +136,8 @@ def formed_data():
                              'categories': [event_category], #test event_categories
                              'cats': ['adventure and sports'], #test
                              'subcategories': ['boating'], #test
-                             'durations': [{'startDateTime': float(datetime_to_iso(event_start_date+event_start_time[:-3])),
-                                            'endDateTime': float(datetime_to_iso(event_end_date + event_end_time[:-3])),
+                             'durations': [{'startDateTime': datetime_to_iso(event_start_date+event_start_time[:-3]),
+                                            'endDateTime': datetime_to_iso(event_end_date + event_end_time[:-3]),
                                             'isTicketingEnabled': True,
                                             'isNewlyAdded': True}],
                              'isEverGreen': False,

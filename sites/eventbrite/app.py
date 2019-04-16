@@ -25,7 +25,6 @@ def convert24(str1):
 
 
 ##############   SINGLE  #####################
-
 all_event_details = []
 
 for i in resp_data:
