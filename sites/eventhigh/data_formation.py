@@ -1,4 +1,5 @@
 import json
+import time
 from datetime import datetime
 from sites.eventhigh.main_resp import main_dict
 from sites.eventhigh.google_image import implicit
@@ -11,7 +12,7 @@ resp_data = main_dict()
 
 def datetime_to_iso(string_date):
     resp = datetime.strptime(string_date, '%Y-%m-%d%H:%M:%S')
-    resp = datetime.timestamp(resp)
+    resp = time.mktime(resp.timetuple())*1000
     return resp
 
 def tickets_str_to_date(string_date):
