@@ -16,8 +16,7 @@ def datetime_to_iso(string_date):
     return resp
 
 def tickets_str_to_date(string_date):
-    resp = datetime.strptime(string_date, '%Y-%m-%d%H:%M:%S')
-    return resp.date()
+    return string_date[:10]+'T'+string_date[10:]+'.000Z'
 
 def tickets_str_to_time(string_date):
     resp = datetime.strptime(string_date, '%Y-%m-%d%H:%M:%S')
@@ -52,6 +51,7 @@ def ticket_details():
                         "auto_hide_before": "",
                         "auto_hide_after": "",
                         "order_confirmation_message": '',
+                        "capacity": temp[1]['capacity'],
                         "sales_channels": [
                             "online",
                             "atd"
@@ -75,25 +75,27 @@ def ticket_details():
 def ticket_adapter():
     all_data = []
     ticket_resp = ticket_details()
-
     if ticket_resp:
         for counter, i in enumerate(ticket_resp):
             ticket_event_name = list(i.keys())[0]
             temp_list = []
             for j in range(len(ticket_resp[counter][ticket_event_name])):
                 ticket_adapter_class= {
+                    'applicableOn': [],
+                    'capacity': i[ticket_event_name][j]['ticket_class']['capacity'],
                     'isExpanded': True,
-                    'price': i[ticket_event_name][j]['ticket_class']['cost'],
                     'name': i[ticket_event_name][j]['ticket_class']['name'],
-                    'validityStartDate': str(tickets_str_to_date(i[ticket_event_name][j]['ticket_class']['sales_start'])),
-                    'validityStartOptionAmPm': 'am' if tickets_str_to_time(
-                        i[ticket_event_name][j]['ticket_class']['sales_start']).hour > 12 else 'pm',
+                    'note': i[ticket_event_name][j]['ticket_class']['description'],
+                    'price': float(i[ticket_event_name][j]['ticket_class']['cost']),
+                    'rank': 1,
+                    'validityEnd': int(datetime_to_iso(i[ticket_event_name][j]['ticket_class']['sales_end'])), #int string
                     'validityEndDate': str(tickets_str_to_date(i[ticket_event_name][j]['ticket_class']['sales_end'])),
                     'validityEndOptionAmPm': 'am' if tickets_str_to_time(i[ticket_event_name][j]['ticket_class']['sales_end']).hour > 12 else 'pm',
-                    'rank': 1,
-                    'validityStart': datetime_to_iso(i[ticket_event_name][j]['ticket_class']['sales_start']),
-                    'validityEnd': datetime_to_iso(i[ticket_event_name][j]['ticket_class']['sales_end'])
-
+                    'validityEndTime': None,
+                    'validityStart': int(datetime_to_iso(i[ticket_event_name][j]['ticket_class']['sales_start'])), # int string
+                    'validityStartDate': str(tickets_str_to_date(i[ticket_event_name][j]['ticket_class']['sales_start'])),
+                    'validityStartOptionAmPm': 'am' if tickets_str_to_time(i[ticket_event_name][j]['ticket_class']['sales_start']).hour > 12 else 'pm',
+                    'validityStartTime': None
                 }
                 temp_list.append(ticket_adapter_class)
             temp_dict = {}
@@ -142,6 +144,7 @@ def formed_data():
                                             'isTicketingEnabled': True,
                                             'isNewlyAdded': True}],
                              'isEverGreen': False,
+                             'isPublished': True,
                              'ehPriceAddons': [],
                              'additionalFields': [],
                              'acn': 2,
