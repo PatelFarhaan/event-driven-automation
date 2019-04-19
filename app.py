@@ -1,3 +1,4 @@
+import logging
 import threading
 from sites.eventbrite.app import eventbrite_data_post
 from sites.eventhigh.data_posting import eventhigh_post_data
@@ -6,6 +7,11 @@ from common_utils.common_files import respective_sites_event_details
 
 
 if __name__ == '__main__':
+    logger = logging.basicConfig(filename='EventsLog.log',
+                                 filemode='a',
+                                 level=logging.DEBUG,
+                                 format='%(asctime)s, %(name)s, %(levelname)s, %(message)s')
+
     threads = []
     events = [eventbrite_data_post, eventhigh_post_data]
     respective_sites_event_details()
