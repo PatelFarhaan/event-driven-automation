@@ -15,10 +15,44 @@ def datetime_to_iso(string_date):
     resp = time.mktime(resp.timetuple())*1000
     return resp
 
+
+def datetime_to_iso_tickets(string_date):
+    mins = string_date[14:16]
+    hrs = string_date[11:13]
+    if  0 < int(string_date[14:16]) <= 15:
+        mins = '00'
+        hrs = string_date[11:13]
+    elif 16 < int(string_date[14:16]) <= 45:
+        mins = '30'
+        hrs = string_date[11:13]
+    elif 46 < int(string_date[14:16]) <= 59:
+        mins = '00'
+        hrs = str(int(string_date[11:13]) + 1)
+
+        if int(string_date[11:13]) > 12:
+            temp = str(int(string_date[11:13]) - 12)
+            if len(temp) == 1:
+                temp = '0' + temp
+                hrs = temp
+
+    temp_string_date = string_date[:11] + hrs + ':' + mins + string_date[16:]
+    resp = datetime.strptime(temp_string_date, '%Y-%m-%dT%H:%M:%S.000Z')
+    resp = time.mktime(resp.timetuple())*1000
+    return resp
+
+
 def tickets_str_to_date(string_date):
-    return string_date[:10]+'T'+string_date[10:]+'.000Z'
+    if int(string_date[10:12]) > 12:
+        temp = str(int(string_date[10:12]) - 12)
+        if len(temp) == 1:
+            temp = '0' + temp
+        return string_date[:10]+'T'+temp+string_date[12:]+'.000Z'
+    else:
+        return string_date[:10]+'T'+string_date[10:]+'.000Z'
+
 
 def tickets_str_to_time(string_date):
+
     resp = datetime.strptime(string_date, '%Y-%m-%d%H:%M:%S')
     return resp.time()
 
@@ -73,6 +107,7 @@ def ticket_details():
 
 
 def ticket_adapter():
+
     all_data = []
     ticket_resp = ticket_details()
     if ticket_resp:
@@ -87,15 +122,12 @@ def ticket_adapter():
                     'name': i[ticket_event_name][j]['ticket_class']['name'],
                     'note': i[ticket_event_name][j]['ticket_class']['description'],
                     'price': float(i[ticket_event_name][j]['ticket_class']['cost']),
-                    'rank': 1,
-                    'validityEnd': int(datetime_to_iso(i[ticket_event_name][j]['ticket_class']['sales_end'])), #int string
+                    'validityEnd': int(datetime_to_iso_tickets(tickets_str_to_date(i[ticket_event_name][j]['ticket_class']['sales_end']))),
                     'validityEndDate': str(tickets_str_to_date(i[ticket_event_name][j]['ticket_class']['sales_end'])),
                     'validityEndOptionAmPm': 'am' if tickets_str_to_time(i[ticket_event_name][j]['ticket_class']['sales_end']).hour > 12 else 'pm',
-                    'validityEndTime': None,
-                    'validityStart': int(datetime_to_iso(i[ticket_event_name][j]['ticket_class']['sales_start'])), # int string
+                    'validityStart': int(datetime_to_iso_tickets(tickets_str_to_date(i[ticket_event_name][j]['ticket_class']['sales_start']))),
                     'validityStartDate': str(tickets_str_to_date(i[ticket_event_name][j]['ticket_class']['sales_start'])),
                     'validityStartOptionAmPm': 'am' if tickets_str_to_time(i[ticket_event_name][j]['ticket_class']['sales_start']).hour > 12 else 'pm',
-                    'validityStartTime': None
                 }
                 temp_list.append(ticket_adapter_class)
             temp_dict = {}
@@ -130,20 +162,20 @@ def formed_data():
             base_template = {'title': event_name,
                              'description': event_desc,
                              'descriptionSections': [],
-                             'bookingText': 'Book Tickets', #test
+                             'bookingText': 'Book Tickets',
                              'participants': [],
                              'ehPrices': ticket_adapter_obj,
                              'ehPricesDisplayCount': 1,
                              'images': [image_url],
                              'imageData': [json.dumps({"source_url":image_url,"original_image_url":image_url,"processed_image_url":image_url,"resized_image_url":image_url,"google_serving_url":image_url,"image_width":1000,"image_height":587,"image_size":547375,"dominant_color":"17 30 69","image_credits":""})],
-                             'categories': [event_category], #test event_categories
-                             'cats': ['adventure and sports'], #test
-                             'subcategories': ['boating'], #test
-                             'durations': [{'startDateTime': datetime_to_iso(event_start_date+event_start_time[:-3]),
-                                            'endDateTime': datetime_to_iso(event_end_date + event_end_time[:-3]),
+                             'categories': [event_category],
+                             'cats': ['adventure and sports'],
+                             'subcategories': ['boating'],
+                             'durations': [{'startDateTime': int(datetime_to_iso(event_start_date+event_start_time[:-3])),
+                                            'endDateTime': int(datetime_to_iso(event_end_date + event_end_time[:-3])),
                                             'isTicketingEnabled': True,
                                             'isNewlyAdded': True}],
-                             'isEverGreen': False,
+                             'isEverGreen': True,
                              'isPublished': True,
                              'ehPriceAddons': [],
                              'additionalFields': [],
