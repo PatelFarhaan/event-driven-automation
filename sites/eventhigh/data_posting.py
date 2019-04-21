@@ -15,7 +15,6 @@ def multi_thread_posting(payload, sess):
         }
 
         url = 'https://ticketing.eventshigh.com/_ah/api/events/v4/update'
-        payload['title'] = 'hs jhw sjxw snx'
         response = sess.put(url=url, data=json.dumps(payload), headers=headers)
         print(response.status_code)
         print("EventHigh Processing Done!!!")
