@@ -191,7 +191,7 @@ def create_ticket():
         pass
 
 
-def eventbrite_data_post():
+def eventbrite_post_data():
     create_ticket()
     upload_file()
     print("EventBrite Processing Done!!!")

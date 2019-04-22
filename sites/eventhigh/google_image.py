@@ -48,7 +48,7 @@ def download_media_file():
 
 def image_uploading(image_name, all_uploaded_images):
     try:
-        bucket_name = 'farhaan_eventhigh'
+        bucket_name = 'eventhigh_images'
         object_name = image_name
         client = storage.Client()
         bucket = client.get_bucket(bucket_name)
@@ -59,7 +59,7 @@ def image_uploading(image_name, all_uploaded_images):
         all_uploaded_images[object_name] = blob.public_url
     except:
         all_uploaded_images[object_name] = False
-
+    print(all_uploaded_images)
     return all_uploaded_images
 
 
