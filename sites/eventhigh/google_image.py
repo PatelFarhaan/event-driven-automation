@@ -7,7 +7,6 @@ from urllib.request import urlopen
 from sites.eventhigh.main_resp import main_dict
 
 
-resp_data = main_dict()
 image_file = 'sites/eventhigh/temp_images/'
 
 
@@ -22,6 +21,7 @@ def image_downloading (event_name, img_folder, img_link, all_downloaded_links):
 
 
 def download_media_file():
+    resp_data = main_dict()
     threads = []
     all_downloaded_links = {}
 
@@ -31,7 +31,7 @@ def download_media_file():
     if not os.path.exists(image_file):
         os.makedirs(image_file)
 
-    for index, i in enumerate(resp_data):
+    for index, i in enumerate(resp_data):  #to check
         event_name = i['event info'][0]['event name']
         img_folder = image_file + "{0}.png".format(event_name)
         img_link = 'https://ercess.com' + i['event info'][0]['banner']
@@ -59,7 +59,7 @@ def image_uploading(image_name, all_uploaded_images):
         all_uploaded_images[object_name] = blob.public_url
     except:
         all_uploaded_images[object_name] = False
-    print(all_uploaded_images)
+
     return all_uploaded_images
 
 
