@@ -192,6 +192,9 @@ def create_ticket():
 
 
 def eventbrite_post_data():
-    create_ticket()
-    upload_file()
-    print("EventBrite Processing Done!!!")
+    if resp_data:
+        create_ticket()
+        upload_file()
+        print("EventBrite Processing Done!!!")
+    else:
+        print("No Events for EventBrite!!!")
