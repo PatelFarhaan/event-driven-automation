@@ -38,21 +38,25 @@ def thread_mul(site_id, event=None):
 
 def townscript_post_data():
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--platform",
-        type=str,
-        default="townscript",
-        help="Name of platform where you want to publish event"
-    )
-    parser.add_argument(
-        "--table_id",
-        type=str,
-        default="1",
-        help="Platform ID to update event in database."
-    )
+    if main_json:
+        parser = argparse.ArgumentParser()
+        parser.add_argument(
+            "--platform",
+            type=str,
+            default="townscript",
+            help="Name of platform where you want to publish event"
+        )
+        parser.add_argument(
+            "--table_id",
+            type=str,
+            default="1",
+            help="Platform ID to update event in database."
+        )
 
-    FLAGS, unparsed = parser.parse_known_args()
+        FLAGS, unparsed = parser.parse_known_args()
 
-    if FLAGS.platform == 'townscript':
-        post_data(FLAGS.table_id)
+        if FLAGS.platform == 'townscript':
+            post_data(FLAGS.table_id)
+
+    else:
+        print("No events for TownScript!!!")
