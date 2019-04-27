@@ -2,23 +2,23 @@ import os
 import sys
 import subprocess
 
-sys.path.append('/var/www/html/crons/event_posting/manual')
-
+sys.path.append('/media/hp/New Volume/Users/hp/personal/main_events/sites/townscript/temp')
 import json
-import requests
 import random
+import requests
 from pprint import pprint
 from datetime import datetime
 
-from automation import TOWNSCRIPT_INFO
+
+IMG_LOCATION = '/media/hp/New Volume/Users/hp/personal/main_events/sites/townscript/temp'
+# IMG_LOCATION = '/var/www/html'
 
 
-IMG_LOCATION = '/var/www/html'
 
+class Townscript():
 
-class Townscript:
-
-    def __init__(self):
+    def __init__(self, TOWNSCRIPT_INFO):
+        self.TOWNSCRIPT_INFO = TOWNSCRIPT_INFO
         self.session = requests.Session()
         self.current_url = 'https://www.townscript.com/signin'
         self.session.headers = {
@@ -44,7 +44,7 @@ class Townscript:
     # login
     def login(self):
         login_referral = 'https://www.townscript.com/signin'
-        credentials = TOWNSCRIPT_INFO['credentials']
+        credentials = self.TOWNSCRIPT_INFO['credentials']
         # preparing body
         data = {'emailId': credentials['email'], 'password': credentials['password']}
         login_res = self.session.post("https://www.townscript.com/api/user/loginwithtownscript", data=data)
@@ -72,7 +72,8 @@ class Townscript:
     # create-event
     def create_event(self):
 
-        events = TOWNSCRIPT_INFO['events']
+        events = self.TOWNSCRIPT_INFO['events']
+        # import ipdb; ipdb.set_trace()
         for event in events:
             request_data = {
                 "isRecurrent": False,  # repeating event
@@ -85,8 +86,7 @@ class Townscript:
                 "name": event['event name'],
                 "isPublic": True,  # public or private event
                 "organizerName": self.user_details['user'],
-                "eventTimeZone": TOWNSCRIPT_INFO['country_data'].get(event['country'], 'India').get('timezone',
-                                                                                                    'Asia/Calcutta'),
+                "eventTimeZone":  None,
                 "shortName": '{}-{}'.format(event['event name'][:20].replace(" ", "-").lower(),
                                             random.randint(1, 99999999))
             }
@@ -141,10 +141,13 @@ class Townscript:
                 "https://www.townscript.com/api/eventdata/generatetopicsandeventtype?id={}".format(event_res['Id']))
             eventtypes = self.session.get("https://www.townscript.com/api/eventdata/loadallkeywordsandeventtypes")
             event_type_id = None
+            # import ipdb; ipdb.set_trace()
             if eventtypes.status_code == 200:
-                event_type_id = [event['id'] for event in eval(eval(eval(eventtypes.text)['data'])['eventtypes']) if
-                                 TOWNSCRIPT_INFO['category'] in event['eventTypeName']]
-            # data = {"dewa_json_data": {"keywords":[{"id":139,"keyName":"digital marketing","keyCode":"digital-marketing","topicId":148,"algoAssigned":False,"weight":2}],"eventid": event_res['Id'],"eventTypeId":13,"isUpdate":False}}
+                eventtypes_all_data = json.loads(eventtypes.text)
+                eventtypes_data = eventtypes_all_data['data']
+                eventtypes_eventtypes = json.loads(json.loads(eventtypes_data)['eventtypes'])[0]
+                event_type_id = [eventtypes_eventtypes['id']]
+
             data = {"dewa_json_data": json.dumps(
                 {"keywords": json.loads(json.loads(tags.json()['data'])['keywords']), "eventid": event_res['Id'],
                  "eventTypeId": event_type_id[0] if event_type_id else
@@ -198,7 +201,7 @@ class Townscript:
                                             data={"id": event_res['Id'], "draft": True, "stepNumber": 6})
 
             # Tickets
-            tickets = TOWNSCRIPT_INFO['tickets']
+            tickets = self.TOWNSCRIPT_INFO['tickets']
             for ticket in tickets:
                 if 'ticket name' in ticket:
                     ticket_data = {"dewa_json_data": json.dumps({
@@ -209,7 +212,7 @@ class Townscript:
                         "maxQuantity": ticket['maximum quantity'],
                         "totalTickets": ticket['ticket quantity'],
                         "ticketType": "NORMAL",
-                        "currency": TOWNSCRIPT_INFO['country_data'].get(event['country'], 'India').get('currency_code',
+                        "currency": self.TOWNSCRIPT_INFO['country_data'].get(event['country'], 'India').get('currency_code',
                                                                                                        'INR'),
                         "ticketPrice": ticket['ticket price'],
                         "startDate": self.date_formatter(ticket['ticket start date'], ticket['ticket start time']),
@@ -234,7 +237,7 @@ class Townscript:
                                             data={"id": event_res['Id'], "draft": False, "stepNumber": 7})
 
             # add forms
-            attendee_form = TOWNSCRIPT_INFO['attendee_form']
+            attendee_form = self.TOWNSCRIPT_INFO['attendee_form']
             metadata = self.session.get(
                 "https://www.townscript.com/api/registrationmetadata/get?id={}".format(event_res['Id']))
             metadata_id = json.loads(eval(metadata.text)['data'])['id']
@@ -288,7 +291,7 @@ class Townscript:
             except:
                 print("Error occured while updating database")
 
-    # process
+
     def process(self, table_id):
 
         # login
