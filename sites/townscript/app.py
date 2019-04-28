@@ -9,10 +9,8 @@ import requests
 from pprint import pprint
 from datetime import datetime
 
-
-IMG_LOCATION = '/media/hp/New Volume/Users/hp/personal/main_events/sites/townscript/temp'
-# IMG_LOCATION = '/var/www/html'
-
+# IMG_LOCATION = '/media/hp/New Volume/Users/hp/personal/main_events/sites/townscript/temp'
+IMG_LOCATION = '/var/www/html'
 
 
 class Townscript():
@@ -49,7 +47,9 @@ class Townscript():
         data = {'emailId': credentials['email'], 'password': credentials['password']}
         login_res = self.session.post("https://www.townscript.com/api/user/loginwithtownscript", data=data)
         # eval response
-        login_res = eval(login_res.text)
+
+        login_res = json.loads(login_res.text)
+        # login_res = eval(login_res.text)
         if login_res['result'] == 'Success':
             self.session.headers['Authorization'] = login_res['data']
             self.user_details = login_res['userDetails']
@@ -86,7 +86,7 @@ class Townscript():
                 "name": event['event name'],
                 "isPublic": True,  # public or private event
                 "organizerName": self.user_details['user'],
-                "eventTimeZone":  None,
+                "eventTimeZone": None,
                 "shortName": '{}-{}'.format(event['event name'][:20].replace(" ", "-").lower(),
                                             random.randint(1, 99999999))
             }
@@ -100,7 +100,7 @@ class Townscript():
             }
             self.session.headers['Referer'] = 'https://www.townscript.com/dashboard/events'
             event_res = self.session.post('https://www.townscript.com/api/eventdata/add', data=data)
-            event_res = eval(event_res.text)
+            event_res = json.loads(event_res.text)
             if event_res['result'] != 'Success':
                 self.event_creation_error[event['event name']] = event_res[
                     'message'] if 'message' in event_res else 'Error'
@@ -130,7 +130,8 @@ class Townscript():
             }
 
             event_up_res = self.session.post("https://www.townscript.com/api/eventdata/update", data=update_data)
-            event_up_res = eval(event_up_res.text)
+            event_up_res = json.loads(event_up_res.text)
+            # event_up_res = eval(event_up_res.text)
             if event_up_res['result'] != 'Success':
                 self.event_creation_error[event['event name']] = event_up_res[
                     'message'] if 'message' in event_up_res else 'Error'
@@ -170,8 +171,8 @@ class Townscript():
             banner_res = self.session.post('https://www.townscript.com/api/eventdata/upload-event-image',
                                            files={'file': open(banner_path, 'rb')},
                                            data={'eventId': event_res['Id'], 'imageType': 'cover'})
-            banner_res = eval(banner_res.text)
-            if banner_res['result'] != "Success":
+
+            if banner_res.status_code != 200:
                 self.event_creation_error[event['event name']] = event_up_res[
                     'message'] if 'message' in event_up_res else 'Error while uploading Image'
                 continue
@@ -189,7 +190,8 @@ class Townscript():
                     profile_res = self.session.post('https://www.townscript.com/api/eventdata/upload-event-image',
                                                     files={'file': open(profile_path, 'rb')},
                                                     data={'eventId': event_res['Id'], 'imageType': 'card'})
-                    profile_res = eval(profile_res.text)
+                    profile_res = json.loads(profile_res.text)
+                    # profile_res = eval(profile_res.text)
                     if profile_res['result'] != "Success":
                         self.event_creation_error[event['event name']] = event_up_res[
                             'message'] if 'message' in event_up_res else 'Error while uploading Image'
@@ -202,6 +204,8 @@ class Townscript():
 
             # Tickets
             tickets = self.TOWNSCRIPT_INFO['tickets']
+            # print(type(self.TOWNSCRIPT_INFO), self.TOWNSCRIPT_INFO)
+            # print(type(event), event)
             for ticket in tickets:
                 if 'ticket name' in ticket:
                     ticket_data = {"dewa_json_data": json.dumps({
@@ -212,8 +216,7 @@ class Townscript():
                         "maxQuantity": ticket['maximum quantity'],
                         "totalTickets": ticket['ticket quantity'],
                         "ticketType": "NORMAL",
-                        "currency": self.TOWNSCRIPT_INFO['country_data'].get(event['country'], 'India').get('currency_code',
-                                                                                                       'INR'),
+                        "currency": 'INR',
                         "ticketPrice": ticket['ticket price'],
                         "startDate": self.date_formatter(ticket['ticket start date'], ticket['ticket start time']),
                         "endDate": self.date_formatter(ticket['expiry date'], ticket['expiry time']),
@@ -227,7 +230,8 @@ class Townscript():
                     }
 
                     ticket_res = self.session.post("https://www.townscript.com/api/ticket/add", data=ticket_data)
-                    ticket_res = eval(ticket_res.text)
+                    ticket_res = json.loads(ticket_res.text)
+                    # ticket_res = eval(ticket_res.text)
                     if ticket_res['result'] != "Success":
                         self.event_creation_error[event['event name']] = "Error in ticket creation."
                         continue
@@ -273,7 +277,8 @@ class Townscript():
             # publish event
             is_publish_res = self.session.get(
                 'https://www.townscript.com/api/eventdata/publish?id={}&value=true'.format(event_res['Id']))
-            is_publish_res = eval(is_publish_res.text)
+            is_publish_res = json.loads(is_publish_res.text)
+            # is_publish_res = eval(is_publish_res.text)
             if is_publish_res['result'] == 'Success':
                 self.event_published = True
                 self.event_url = 'https://www.townscript.com/e/{}'.format(request_data['shortName'])
@@ -290,7 +295,6 @@ class Townscript():
                 subprocess.call(cmd)
             except:
                 print("Error occured while updating database")
-
 
     def process(self, table_id):
 

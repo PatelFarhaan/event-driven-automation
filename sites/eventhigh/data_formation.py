@@ -57,6 +57,9 @@ def tickets_str_to_time(string_date):
     return resp.time()
 
 
+def custom_questions():
+    pass
+
 def ticket_details():
     all_ticket_details = []
     if resp_data:
