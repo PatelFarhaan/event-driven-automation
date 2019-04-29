@@ -1,5 +1,6 @@
 import json
 import time
+import calendar
 from datetime import datetime
 from sites.eventhigh.main_resp import main_dict
 from sites.eventhigh.google_image import implicit
@@ -10,35 +11,39 @@ event_ticket_ids = {}
 resp_data = main_dict()
 
 
-def datetime_to_iso(string_date):
-    resp = datetime.strptime(string_date, '%Y-%m-%d%H:%M:%S')
-    resp = time.mktime(resp.timetuple())*1000
-    return resp
+def epouch_time(date, times):
+    result = time.strftime("%Y-%m-%d %H:%M:%S",
+                         time.gmtime(time.mktime(time.strptime(date +' '+ times,
+                                                               "%Y-%m-%d %H:%M:%S"))))
+
+    epouch_dt = str(calendar.timegm(time.strptime(result, '%Y-%m-%d %H:%M:%S'))) + '000'
+    return epouch_dt
 
 
-def datetime_to_iso_tickets(string_date):
-    mins = string_date[14:16]
-    hrs = string_date[11:13]
-    if  0 < int(string_date[14:16]) <= 15:
-        mins = '00'
-        hrs = string_date[11:13]
-    elif 16 < int(string_date[14:16]) <= 45:
-        mins = '30'
-        hrs = string_date[11:13]
-    elif 46 < int(string_date[14:16]) <= 59:
-        mins = '00'
-        hrs = str(int(string_date[11:13]) + 1)
+def datetime_conversion(string):
+    _time = int(string[:2])
+    _minutes = int(string[3:5])
 
-        if int(string_date[11:13]) > 12:
-            temp = str(int(string_date[11:13]) - 12)
-            if len(temp) == 1:
-                temp = '0' + temp
-                hrs = temp
+    if len(str(_time)) == 1:
+        _time = '0' + str(_time)
 
-    temp_string_date = string_date[:11] + hrs + ':' + mins + string_date[16:]
-    resp = datetime.strptime(temp_string_date, '%Y-%m-%dT%H:%M:%S.000Z')
-    resp = time.mktime(resp.timetuple())*1000
-    return resp
+    if _minutes >= 30:
+        if _minutes >= 45:
+            _minutes = '00'
+            _time = int(_time)
+            _time += 1
+            if int(_time) > 12:
+                datetime_conversion(str(_time) + ':' + str(_minutes) + string[5:])
+        else:
+            _minutes = 30
+
+    elif _minutes <= 30:
+        if _minutes <= 15:
+            _minutes = '00'
+        else:
+            _minutes = 30
+
+    return (str(_time)+':'+str(_minutes)+':00')
 
 
 def tickets_str_to_date(string_date):
@@ -110,7 +115,6 @@ def ticket_details():
 
 
 def ticket_adapter():
-
     all_data = []
     ticket_resp = ticket_details()
     if ticket_resp:
@@ -125,10 +129,12 @@ def ticket_adapter():
                     'name': i[ticket_event_name][j]['ticket_class']['name'],
                     'note': i[ticket_event_name][j]['ticket_class']['description'],
                     'price': float(i[ticket_event_name][j]['ticket_class']['cost']),
-                    'validityEnd': int(datetime_to_iso_tickets(tickets_str_to_date(i[ticket_event_name][j]['ticket_class']['sales_end']))),
+                    'validityEnd': epouch_time(i[ticket_event_name][j]['ticket_class']['sales_end'][:10],
+                                               datetime_conversion(i[ticket_event_name][j]['ticket_class']['sales_end'][10:])),
                     'validityEndDate': str(tickets_str_to_date(i[ticket_event_name][j]['ticket_class']['sales_end'])),
                     'validityEndOptionAmPm': 'am' if tickets_str_to_time(i[ticket_event_name][j]['ticket_class']['sales_end']).hour > 12 else 'pm',
-                    'validityStart': int(datetime_to_iso_tickets(tickets_str_to_date(i[ticket_event_name][j]['ticket_class']['sales_start']))),
+                    'validityStart': epouch_time(i[ticket_event_name][j]['ticket_class']['sales_start'][:10],
+                                                 datetime_conversion(i[ticket_event_name][j]['ticket_class']['sales_start'][10:])),
                     'validityStartDate': str(tickets_str_to_date(i[ticket_event_name][j]['ticket_class']['sales_start'])),
                     'validityStartOptionAmPm': 'am' if tickets_str_to_time(i[ticket_event_name][j]['ticket_class']['sales_start']).hour > 12 else 'pm',
                 }
@@ -174,8 +180,10 @@ def formed_data():
                              'categories': [event_category],
                              'cats': ['adventure and sports'],
                              'subcategories': ['boating'],
-                             'durations': [{'startDateTime': int(datetime_to_iso(event_start_date+event_start_time[:-3])),
-                                            'endDateTime': int(datetime_to_iso(event_end_date + event_end_time[:-3])),
+                             'durations': [{'startDateTime': epouch_time(event_start_date,
+                                                                         datetime_conversion(event_start_time[:-3])),
+                                            'endDateTime': epouch_time(event_end_date,
+                                                                       datetime_conversion(event_end_time[:-3])),
                                             'isTicketingEnabled': True,
                                             'isNewlyAdded': True}],
                              'isEverGreen': True,
