@@ -11,41 +11,6 @@ event_ticket_ids = {}
 resp_data = main_dict()
 
 
-def epouch_time(date, times):
-    result = time.strftime("%Y-%m-%d %H:%M:%S",
-                         time.gmtime(time.mktime(time.strptime(date +' '+ times,
-                                                               "%Y-%m-%d %H:%M:%S"))))
-
-    epouch_dt = str(calendar.timegm(time.strptime(result, '%Y-%m-%d %H:%M:%S'))) + '000'
-    return epouch_dt
-
-
-def datetime_conversion(string):
-    _time = int(string[:2])
-    _minutes = int(string[3:5])
-
-    if len(str(_time)) == 1:
-        _time = '0' + str(_time)
-
-    if _minutes >= 30:
-        if _minutes >= 45:
-            _minutes = '00'
-            _time = int(_time)
-            _time += 1
-            if int(_time) > 12:
-                datetime_conversion(str(_time) + ':' + str(_minutes) + string[5:])
-        else:
-            _minutes = 30
-
-    elif _minutes <= 30:
-        if _minutes <= 15:
-            _minutes = '00'
-        else:
-            _minutes = 30
-
-    return (str(_time)+':'+str(_minutes)+':00')
-
-
 def tickets_str_to_date(string_date):
     if int(string_date[10:12]) > 12:
         temp = str(int(string_date[10:12]) - 12)
@@ -56,14 +21,28 @@ def tickets_str_to_date(string_date):
         return string_date[:10]+'T'+string_date[10:]+'.000Z'
 
 
-def tickets_str_to_time(string_date):
-
+def datetime_to_iso(string_date):
     resp = datetime.strptime(string_date, '%Y-%m-%d%H:%M:%S')
-    return resp.time()
+    resp = time.mktime(resp.timetuple())*1000
+    return resp
+
+
+def minute_change(string):
+    mins = int(string[3:5])
+    if  15 >=  mins >= 0:
+        return string[:3]+'00'+string[5:]
+    elif 30 >= mins > 15:
+        return string[:3] + '30' + string[5:]
+    elif 45 >= mins > 30:
+        return string[:3] + '30' + string[5:]
+    elif mins > 45:
+        hr = str(int(string[:2]) + 1)
+        return hr + ':' + '00' + string[5:]
 
 
 def custom_questions():
     pass
+
 
 def ticket_details():
     all_ticket_details = []
@@ -73,6 +52,7 @@ def ticket_details():
             sub_list = []
             temp = resp_data[i]['tickets']
             for j in range(len(temp)-1):
+
                 ticket_event_name = resp_data[i]['event info'][0]['event name']
                 ticket_class_data = {
                     "ticket_class": {
@@ -129,15 +109,14 @@ def ticket_adapter():
                     'name': i[ticket_event_name][j]['ticket_class']['name'],
                     'note': i[ticket_event_name][j]['ticket_class']['description'],
                     'price': float(i[ticket_event_name][j]['ticket_class']['cost']),
-                    'validityEnd': epouch_time(i[ticket_event_name][j]['ticket_class']['sales_end'][:10],
-                                               datetime_conversion(i[ticket_event_name][j]['ticket_class']['sales_end'][10:])),
+                    'validityEnd': int(str(int(time.mktime(time.strptime(i[ticket_event_name][j]['ticket_class']['sales_end'][:10]+' '+minute_change(i[ticket_event_name][j]['ticket_class']['sales_end'][10:]),
+                                                                         '%Y-%m-%d %H:%M:%S'))))+'000'),
                     'validityEndDate': str(tickets_str_to_date(i[ticket_event_name][j]['ticket_class']['sales_end'])),
-                    'validityEndOptionAmPm': 'am' if tickets_str_to_time(i[ticket_event_name][j]['ticket_class']['sales_end']).hour > 12 else 'pm',
-                    'validityStart': epouch_time(i[ticket_event_name][j]['ticket_class']['sales_start'][:10],
-                                                 datetime_conversion(i[ticket_event_name][j]['ticket_class']['sales_start'][10:])),
-                    'validityStartDate': str(tickets_str_to_date(i[ticket_event_name][j]['ticket_class']['sales_start'])),
-                    'validityStartOptionAmPm': 'am' if tickets_str_to_time(i[ticket_event_name][j]['ticket_class']['sales_start']).hour > 12 else 'pm',
+                    'validityStart': int(str(int(time.mktime(time.strptime(i[ticket_event_name][j]['ticket_class']['sales_start'][:10]+' '+minute_change(i[ticket_event_name][j]['ticket_class']['sales_start'][10:]),
+                                                                           '%Y-%m-%d %H:%M:%S'))))+'000'),
+                    'validityStartDate': str(tickets_str_to_date(i[ticket_event_name][j]['ticket_class']['sales_start']))
                 }
+
                 temp_list.append(ticket_adapter_class)
             temp_dict = {}
             temp_dict[ticket_event_name] = temp_list
@@ -168,6 +147,8 @@ def formed_data():
             else:
                 event_category = resp_data[i]['ercess partners categories'][0]['partner category']
             ticket_adapter_obj = ticket_adapter()[i][event_name]
+
+            # import ipdb; ipdb.set_trace()
             base_template = {'title': event_name,
                              'description': event_desc,
                              'descriptionSections': [],
@@ -180,12 +161,24 @@ def formed_data():
                              'categories': [event_category],
                              'cats': ['adventure and sports'],
                              'subcategories': ['boating'],
-                             'durations': [{'startDateTime': epouch_time(event_start_date,
-                                                                         datetime_conversion(event_start_time[:-3])),
-                                            'endDateTime': epouch_time(event_end_date,
-                                                                       datetime_conversion(event_end_time[:-3])),
-                                            'isTicketingEnabled': True,
-                                            'isNewlyAdded': True}],
+                             'durations': [{
+
+                                 # 'startDateTime': int(str(int(time.mktime(time.strptime(event_start_date+' '+minute_change(event_start_time[:-3]),
+                                 #                                                        '%Y-%m-%d %H:%M:%S'))))+'000'),
+                                 # 'endDateTime': int(str(int(time.mktime(time.strptime(event_end_date+' '+minute_change(event_end_time[:-3]),
+                                 #                                                      '%Y-%m-%d %H:%M:%S'))))+'000'),
+                                 # 'startDateTime': int(str(int(time.mktime(
+                                 #     time.strptime(event_start_date + ' ' + event_start_time[:-3],
+                                 #                   '%Y-%m-%d %H:%M:%S')))) + '000'),
+                                 # 'endDateTime': int(str(int(time.mktime(
+                                 #     time.strptime(event_end_date + ' ' + event_end_time[:-3],
+                                 #                   '%Y-%m-%d %H:%M:%S')))) + '000'),
+
+                                 'startDateTime': int(datetime_to_iso(event_start_date + event_start_time[:-3])),
+                                 'endDateTime': int(datetime_to_iso(event_end_date + event_end_time[:-3])),
+
+                                 'isTicketingEnabled': True,
+                                 'isNewlyAdded': True}],
                              'isEverGreen': True,
                              'isPublished': True,
                              'ehPriceAddons': [],
@@ -204,7 +197,6 @@ def formed_data():
                              'addEventSource': 'diy_web',
                              'isEventSubjectedToReview': False,
                              'sectionsSubjectedToReview': ''}
-
             total_formed_data.append(base_template)
 
     else:
