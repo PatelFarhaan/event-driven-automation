@@ -13,16 +13,14 @@ if __name__ == '__main__':
                                  filemode='a',
                                  level=logging.DEBUG,
                                  format='%(asctime)s, %(name)s, %(levelname)s, %(message)s')
-    eventhigh_post_data()
-    # threads = []
-    # events = [eventbrite_post_data, eventhigh_post_data, townscript_post_data]
-    # respective_sites_event_details()
-    # for i in events:
-    #     t = threading.Thread(target=i, args=())
-    #     threads.append(t)
-    #     t.start()
-    #
-    # for j in threads:
-    #     j.join()
 
-    # doattend_post_data()
+    threads = []
+    events = [eventbrite_post_data, eventhigh_post_data, townscript_post_data]
+    respective_sites_event_details()
+    for i in events:
+        t = threading.Thread(target=i, args=())
+        threads.append(t)
+        t.start()
+
+    for j in threads:
+        j.join()

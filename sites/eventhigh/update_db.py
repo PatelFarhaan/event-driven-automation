@@ -18,10 +18,12 @@ connection_pool = pooling.MySQLConnectionPool(pool_name="pynative_pool",
 
 def update_datebase(event_id):
     connection_object, cursor = get_conn()
-    import ipdb; ipdb.set_trace()
     try:
-        query = "update table event_status_on_channel set promotion_status='published' where event_id={0};".format(event_id)
+        query = """UPDATE event_status_on_channel SET promotion_status='published' WHERE event_id={0};""".format(event_id)
         cursor.execute(query)
+        connection_object.commit()
+        cursor.close()
+        connection_object.close()
         return True
     except:
         return False
@@ -30,13 +32,14 @@ def update_datebase(event_id):
 def get_event_id(event_name):
     connection_object, cursor = get_conn()
     try:
-        import ipdb; ipdb.set_trace()
-        query = "SELECT id FROM articles2 WHERE event_name={0};".format(event_name)
+        query = """SELECT id FROM articles2 WHERE event_name = '{0}';""".format(event_name)
         cursor.execute(query)
         data = cursor.fetchall()
-        for id in data:
-            event_id = id[0]
+        event_id = data[0][0]
         resp = update_datebase(event_id)
+        cursor.close()
+        connection_object.close()
+        print(event_name)
         return resp
     except:
         return False

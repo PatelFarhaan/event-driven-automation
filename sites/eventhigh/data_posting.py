@@ -16,7 +16,6 @@ def multi_thread_posting(payload, sess):
         }
 
         url = 'https://ticketing.eventshigh.com/_ah/api/events/v4/update'
-        # import ipdb; ipdb.set_trace()
         response = sess.put(url=url, data=json.dumps(payload), headers=headers)
         print(response.status_code)
         if response.status_code == 204:
@@ -30,8 +29,6 @@ def eventhigh_post_data():
     threads = []
     resp, sess = login()
     payloads = formed_data()
-
-    # print(payloads)
 
     if payloads:
         if resp.status_code == 200:
