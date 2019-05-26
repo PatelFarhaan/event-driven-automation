@@ -73,7 +73,7 @@ def ticket_details():
                         "auto_hide_before": "",
                         "auto_hide_after": "",
                         "order_confirmation_message": '',
-                        "capacity": temp[1]['capacity'],
+                        "capacity": temp[-1]['capacity'],
                         "sales_channels": [
                             "online",
                             "atd"
@@ -102,6 +102,21 @@ def ticket_adapter():
             ticket_event_name = list(i.keys())[0]
             temp_list = []
             for j in range(len(ticket_resp[counter][ticket_event_name])):
+
+
+                end_time = minute_change(i[ticket_event_name][j]['ticket_class']['sales_end'][10:])
+                if end_time[:2] >= '24':
+                    sales_end_time = '00'+end_time[2:]
+                else:
+                    sales_end_time = end_time
+
+                strart_time = minute_change(i[ticket_event_name][j]['ticket_class']['sales_start'][10:])
+                if strart_time[:2] >= '24':
+                    sales_start_time = '00'+strart_time
+                else:
+                    sales_start_time = strart_time
+
+
                 ticket_adapter_class= {
                     'applicableOn': [],
                     'capacity': i[ticket_event_name][j]['ticket_class']['capacity'],
@@ -109,10 +124,10 @@ def ticket_adapter():
                     'name': i[ticket_event_name][j]['ticket_class']['name'],
                     'note': i[ticket_event_name][j]['ticket_class']['description'],
                     'price': float(i[ticket_event_name][j]['ticket_class']['cost']),
-                    'validityEnd': int(str(int(time.mktime(time.strptime(i[ticket_event_name][j]['ticket_class']['sales_end'][:10]+' '+minute_change(i[ticket_event_name][j]['ticket_class']['sales_end'][10:]),
+                    'validityEnd': int(str(int(time.mktime(time.strptime(i[ticket_event_name][j]['ticket_class']['sales_end'][:10]+' '+sales_end_time,
                                                                          '%Y-%m-%d %H:%M:%S'))))+'000'),
                     'validityEndDate': str(tickets_str_to_date(i[ticket_event_name][j]['ticket_class']['sales_end'])),
-                    'validityStart': int(str(int(time.mktime(time.strptime(i[ticket_event_name][j]['ticket_class']['sales_start'][:10]+' '+minute_change(i[ticket_event_name][j]['ticket_class']['sales_start'][10:]),
+                    'validityStart': int(str(int(time.mktime(time.strptime(i[ticket_event_name][j]['ticket_class']['sales_start'][:10]+' '+sales_start_time,
                                                                            '%Y-%m-%d %H:%M:%S'))))+'000'),
                     'validityStartDate': str(tickets_str_to_date(i[ticket_event_name][j]['ticket_class']['sales_start']))
                 }

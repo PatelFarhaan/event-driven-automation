@@ -6,11 +6,14 @@ sys.path.append('/media/hp/New Volume/Users/hp/personal/main_events/sites/townsc
 import json
 import random
 import requests
+import dateparser
 from pprint import pprint
 from datetime import datetime
+from sites.townscript.update_db import get_event_id
 
-# IMG_LOCATION = '/media/hp/New Volume/Users/hp/personal/main_events/sites/townscript/temp'
-IMG_LOCATION = '/var/www/html'
+
+IMG_LOCATION = '/media/hp/New Volume/Users/hp/personal/main_events/sites/townscript/temp'
+# IMG_LOCATION = '/var/www/html'
 
 
 class Townscript():
@@ -39,17 +42,16 @@ class Townscript():
             'date': 'CALENDAR'
         }
 
-    # login
+
     def login(self):
         login_referral = 'https://www.townscript.com/signin'
         credentials = self.TOWNSCRIPT_INFO['credentials']
-        # preparing body
+
         data = {'emailId': credentials['email'], 'password': credentials['password']}
         login_res = self.session.post("https://www.townscript.com/api/user/loginwithtownscript", data=data)
-        # eval response
 
         login_res = json.loads(login_res.text)
-        # login_res = eval(login_res.text)
+
         if login_res['result'] == 'Success':
             self.session.headers['Authorization'] = login_res['data']
             self.user_details = login_res['userDetails']
@@ -57,8 +59,9 @@ class Townscript():
             raise Exception(login_res['data'])
 
     def date_formatter(self, date, time):
+
         try:
-            import dateparser
+
             date = dateparser.parse(date).strftime('%Y-%m-%d')
             return dateparser.parse('{} {}'.format(date, time)).strftime("%Y-%m-%dT%H:%M:%S.000+0530")
         except:
@@ -69,14 +72,14 @@ class Townscript():
                 return datetime.strptime('{} {}'.format(date, time), '%Y-%m-%d %H:%M:%S %p').strftime(
                     "%Y-%m-%dT%H:%M:%S.000+0530")
 
-    # create-event
+
     def create_event(self):
 
         events = self.TOWNSCRIPT_INFO['events']
-        # import ipdb; ipdb.set_trace()
+
         for event in events:
             request_data = {
-                "isRecurrent": False,  # repeating event
+                "isRecurrent": False,
                 "live": False,
                 "draft": True,
                 "stepNumber": 2,
@@ -84,14 +87,14 @@ class Townscript():
                 "startTime": self.date_formatter(event['start date'], event['start time']),
                 "endTime": self.date_formatter(event['end date'], event['end time']),
                 "name": event['event name'],
-                "isPublic": True,  # public or private event
+                "isPublic": True,
                 "organizerName": self.user_details['user'],
                 "eventTimeZone": None,
                 "shortName": '{}-{}'.format(event['event name'][:20].replace(" ", "-").lower(),
                                             random.randint(1, 99999999))
             }
 
-            # step1 - name and event daterange
+
             data = {
                 "dewa_json_data": json.dumps(request_data),
                 "eventtype": "0",
@@ -100,16 +103,17 @@ class Townscript():
             }
             self.session.headers['Referer'] = 'https://www.townscript.com/dashboard/events'
             event_res = self.session.post('https://www.townscript.com/api/eventdata/add', data=data)
+
             event_res = json.loads(event_res.text)
             if event_res['result'] != 'Success':
                 self.event_creation_error[event['event name']] = event_res[
                     'message'] if 'message' in event_res else 'Error'
                 continue
 
-            # step2 - venue
+
             request_data['stepNumber'] = 3
             request_data['id'] = event_res['Id']
-            # TODO:: ONLINE EVENT HANDLING
+
             request_data['onlineEvent'] = False
             request_data["venueLocation"] = event['address 1']
             request_data["addressLine1"] = event['address 2']
@@ -130,52 +134,59 @@ class Townscript():
             }
 
             event_up_res = self.session.post("https://www.townscript.com/api/eventdata/update", data=update_data)
+
             event_up_res = json.loads(event_up_res.text)
-            # event_up_res = eval(event_up_res.text)
+
             if event_up_res['result'] != 'Success':
                 self.event_creation_error[event['event name']] = event_up_res[
                     'message'] if 'message' in event_up_res else 'Error'
                 continue
 
-            # step3 - Event Tags
+
             tags = self.session.get(
                 "https://www.townscript.com/api/eventdata/generatetopicsandeventtype?id={}".format(event_res['Id']))
             eventtypes = self.session.get("https://www.townscript.com/api/eventdata/loadallkeywordsandeventtypes")
+
             event_type_id = None
-            # import ipdb; ipdb.set_trace()
+
             if eventtypes.status_code == 200:
                 eventtypes_all_data = json.loads(eventtypes.text)
                 eventtypes_data = eventtypes_all_data['data']
                 eventtypes_eventtypes = json.loads(json.loads(eventtypes_data)['eventtypes'])[0]
                 event_type_id = [eventtypes_eventtypes['id']]
 
+
             data = {"dewa_json_data": json.dumps(
                 {"keywords": json.loads(json.loads(tags.json()['data'])['keywords']), "eventid": event_res['Id'],
                  "eventTypeId": event_type_id[0] if event_type_id else
                  json.loads(json.loads(tags.json()['data'])['eventtype'])['id'], 'isUpdate': False})}
+
             event_type = self.session.post("https://www.townscript.com/api/eventdata/addorupdatetopicsandeventtype",
                                            data=data)
             draftstatus = self.session.post("https://www.townscript.com/api/eventdata/updatedraftstatus",
                                             data={"id": event_res['Id'], "draft": True, "stepNumber": 5})
 
-            # step4 - Upload photos
-            # check path
+
             event['banner'] = event['banner'].strip()
-            banner_path = '{}/{}'.format(IMG_LOCATION, event['banner'].strip())
+            banner_path = '{}{}'.format(IMG_LOCATION, event['banner'].strip())
+
+
             if not os.path.exists(banner_path):
                 banner_path = '{}'.format(event['banner'])
                 if not os.path.exists(banner_path):
                     self.event_creation_error[event['event name']] = '{} Does not exists'.format(banner_path)
-                    continue
-
-            banner_res = self.session.post('https://www.townscript.com/api/eventdata/upload-event-image',
-                                           files={'file': open(banner_path, 'rb')},
-                                           data={'eventId': event_res['Id'], 'imageType': 'cover'})
-
-            if banner_res.status_code != 200:
-                self.event_creation_error[event['event name']] = event_up_res[
-                    'message'] if 'message' in event_up_res else 'Error while uploading Image'
-                continue
+                    pass
+            else:
+                banner_res = self.session.post('https://www.townscript.com/api/eventdata/upload-event-image',
+                                               files={'file': open(banner_path, 'rb')},
+                                               data={'eventId': event_res['Id'], 'imageType': 'cover'})
+            try:
+                if banner_res.status_code != 200:
+                    self.event_creation_error[event['event name']] = event_up_res[
+                        'message'] if 'message' in event_up_res else 'Error while uploading Image'
+                    pass
+            except:
+                pass
 
             if event['profile image']:
                 event['profile image'] = event['profile image'].strip()
@@ -184,14 +195,14 @@ class Townscript():
                     profile_path = '{}'.format(event['profile image'])
                     if not os.path.exists(profile_path):
                         self.event_creation_error[event['event name']] = '{} Does not exists'.format(profile_path)
-                        continue
+                        pass
 
                 try:
                     profile_res = self.session.post('https://www.townscript.com/api/eventdata/upload-event-image',
                                                     files={'file': open(profile_path, 'rb')},
                                                     data={'eventId': event_res['Id'], 'imageType': 'card'})
                     profile_res = json.loads(profile_res.text)
-                    # profile_res = eval(profile_res.text)
+
                     if profile_res['result'] != "Success":
                         self.event_creation_error[event['event name']] = event_up_res[
                             'message'] if 'message' in event_up_res else 'Error while uploading Image'
@@ -199,13 +210,13 @@ class Townscript():
                 except:
                     pass
 
+
             draftstatus = self.session.post("https://www.townscript.com/api/eventdata/updatedraftstatus",
                                             data={"id": event_res['Id'], "draft": True, "stepNumber": 6})
 
-            # Tickets
+
             tickets = self.TOWNSCRIPT_INFO['tickets']
-            # print(type(self.TOWNSCRIPT_INFO), self.TOWNSCRIPT_INFO)
-            # print(type(event), event)
+
             for ticket in tickets:
                 if 'ticket name' in ticket:
                     ticket_data = {"dewa_json_data": json.dumps({
@@ -231,20 +242,22 @@ class Townscript():
 
                     ticket_res = self.session.post("https://www.townscript.com/api/ticket/add", data=ticket_data)
                     ticket_res = json.loads(ticket_res.text)
-                    # ticket_res = eval(ticket_res.text)
+
                     if ticket_res['result'] != "Success":
                         self.event_creation_error[event['event name']] = "Error in ticket creation."
                         continue
 
-            # update draft status
+
             draftstatus = self.session.post("https://www.townscript.com/api/eventdata/updatedraftstatus",
                                             data={"id": event_res['Id'], "draft": False, "stepNumber": 7})
 
-            # add forms
+
             attendee_form = self.TOWNSCRIPT_INFO['attendee_form']
             metadata = self.session.get(
                 "https://www.townscript.com/api/registrationmetadata/get?id={}".format(event_res['Id']))
+
             metadata_id = json.loads(eval(metadata.text)['data'])['id']
+
             for idx, field in enumerate(attendee_form):
                 FORM_URL = 'https://www.townscript.com/api/forms/add'
                 form_data = {
@@ -261,56 +274,36 @@ class Townscript():
                                     "userId": self.user_details['userId']
                                     })
                 }
+
                 form_res = self.session.post(FORM_URL, data=form_data)
 
-            # create-event
+
+
             finish_res = self.session.post("https://www.townscript.com/api/registrationmetadata/finish-event-create",
                                            data={"id": event_res['Id'], "dewa_json_data": json.dumps([])})
+
             finish = eval(finish_res.text)
             if finish['result'] != 'Success':
                 self.event_creation_error[event['event name']] = "Error Occur while submitting event."
                 continue
 
             self.success_events.append(event['event name'])
-            # draftstatus = self.session.post("https://www.townscript.com/api/eventdata/updatedraftstatus", data={"id": event_res['Id'], "draft": False, "stepNumber": 8})
 
-            # publish event
             is_publish_res = self.session.get(
                 'https://www.townscript.com/api/eventdata/publish?id={}&value=true'.format(event_res['Id']))
             is_publish_res = json.loads(is_publish_res.text)
-            # is_publish_res = eval(is_publish_res.text)
+
             if is_publish_res['result'] == 'Success':
                 self.event_published = True
                 self.event_url = 'https://www.townscript.com/e/{}'.format(request_data['shortName'])
+                get_event_id(event['event name'])
             else:
                 self.event_published = False
+            print("Result is: ", is_publish_res)
 
-    def update_event_in_db(self, table_id):
 
-        if self.event_published:
-            update_db = '/var/www/html/crons/event_posting/manual/update_db.py'
-            try:
-                # URL, table_id, promotion_status, partner_status
-                cmd = ['python3', update_db, self.event_url, table_id, 'published', 'approved']
-                subprocess.call(cmd)
-            except:
-                print("Error occured while updating database")
 
     def process(self, table_id):
 
-        # login
         self.login()
-
-        # create-event
         self.create_event()
-
-        # check parameters for database
-        self.update_event_in_db(table_id)
-
-        print("Events Created Successfully")
-        pprint(self.success_events)
-
-        print("Error in Event Creation")
-        pprint(self.event_creation_error)
-
-        print("URL: {}".format(self.event_url))

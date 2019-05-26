@@ -4,6 +4,7 @@ import threading
 from sites.eventbrite.app import eventbrite_post_data
 from sites.eventhigh.data_posting import eventhigh_post_data
 from sites.townscript.data_posting import townscript_post_data
+# from sites.eventseeker.data_posting import eventseeker_post_data
 from common_utils.common_files import respective_sites_event_details
 
 
